@@ -1,0 +1,70 @@
+<%# index.html.erb %>
+<% extend ActionView::Helpers::DateHelper %>
+
+<h1>📋 Latest Web Dev Jobs</h1>
+
+<%= form_with url: search_jobs_path, method: :get, local: true do %>
+  <input type="text" name="q" placeholder="Search jobs..." value="<%= params[:q] %>" style="padding: 8px; width: 220px; border-radius: 6px; border: 1px solid #ccc; margin-right: 10px;" />
+
+  <select name="source" style="padding: 8px; border-radius: 6px; margin-right: 10px;">
+    <option value="">All Sources</option>
+    <% Job.distinct.pluck(:source).compact.each do |src| %>
+      <option value="<%= src %>" <%= 'selected' if params[:source] == src %>><%= src %></option>
+    <% end %>
+  </select>
+
+  <button type="submit" class="refresh-button">🔍 Search</button>
+<% end %>
+
+<%= button_to "🔄 Refresh Jobs", refresh_jobs_path, method: :post, class: "refresh-button" %>
+
+<% if flash[:notice] %>
+  <p style="color: green;"><%= flash[:notice] %></p>
+<% end %>
+
+<% @jobs.each do |job| %>
+  <div class="job-card" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
+    <h2>
+      <%= job.title %>
+      <% if job.created_at > 1.day.ago %>
+        <span style="color: green; font-weight: bold;">🆕 New</span>
+      <% end %>
+    </h2>
+
+    <div style="display: flex; align-items: center; gap: 12px; margin: 8px 0;">
+      <span style="
+        background-color: #e0e7ff;
+        color: #1e40af;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        display: inline-block;
+      ">
+        🔗 <%= job.source %>
+      </span>
+
+      <span style="color: #555; font-size: 0.85rem;">
+        ⏳ Posted <%= time_ago_in_words(job.created_at) %> ago
+      </span>
+    </div>
+
+    <p><strong>Company:</strong> <%= job.company %></p>
+    <p><strong>Location:</strong> <%= job.location %></p>
+    <p><strong>Tags:</strong> <%= job.tags %></p>
+
+    <% if job.salary_min %>
+      <p><strong>Salary:</strong> $<%= job.salary_min %> – $<%= job.salary_max %></p>
+    <% end %>
+
+    <p><%= truncate(job.description, length: 300) %></p>
+
+    <p>
+      <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 10px 16px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+        Apply on Site ↗
+      </a>
+    </p>
+  </div>
+<% end %>
+
+<%= paginate @jobs %>
